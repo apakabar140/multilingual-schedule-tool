@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>據點友善多語課表翻譯工具 | One-Forty</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --yellow: #FFC200;
+  --yellow-light: #FFF8DC;
+  --dark-blue: #1a2e4a;
+  --mid-blue: #2c4a6e;
+  --light: #f5f6f8;
+  --white: #ffffff;
+  --border: #e0e4ea;
+  --text: #2d3142;
+  --text-light: #7a828f;
+  --green: #4caf50;
+  --green-light: #e8f5e9;
+  --radius: 10px;
+}
+
+body {
+  font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+  color: var(--text);
+  background: var(--light);
+  min-height: 100vh;
+}
+
+/* ── HEADER ── */
+.header {
+  background: var(--dark-blue);
+  color: white;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.logo-badge {
+  background: var(--yellow);
+  color: var(--dark-blue);
+  font-weight: 900;
+  font-size: 13px;
+  padding: 5px 11px;
+  border-radius: 6px;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+.header-title { font-size: 17px; font-weight: 700; }
+.header-subtitle { font-size: 12px; opacity: 0.55; margin-top: 2px; }
+
+/* ── STEP BAR ── */
+.step-bar {
+  display: flex;
+  background: white;
+  border-bottom: 2px solid var(--border);
+}
+.step-item {
+  flex: 1;
+  text-align: center;
+  padding: 13px 8px;
+  font-size: 13px;
+  color: var(--text-light);
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+}
+.step-item.active { color: var(--dark-blue); font-weight: 700; border-bottom-color: var(--yellow); }
+.step-item.done { color: var(--green); }
+.step-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--border); color: var(--text-light);
+  font-size: 11px; font-weight: 700; margin-right: 6px; vertical-align: middle;
+}
+.step-item.active .step-num { background: var(--yellow); color: var(--dark-blue); }
+.step-item.done .step-num { background: var(--green); color: white; }
+
+/* ── CONTAINER ── */
+.container { max-width: 900px; margin: 0 auto; padding: 24px 16px 48px; }
+
+/* ── BUTTONS ── */
+.btn-primary {
+  background: var(--yellow); color: var(--dark-blue);
+  border: none; padding: 12px 28px; border-radius: 8px;
+  font-size: 15px; font-weight: 700; cursor: pointer; transition: opacity .15s;
+  font-family: inherit;
+}
+.btn-primary:hover { opacity: .85; }
+.btn-secondary {
+  background: white; color: var(--dark-blue);
+  border: 2px solid var(--dark-blue); padding: 10px 20px;
+  border-radius: 8px; font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+}
+.btn-secondary:hover { background: var(--light); }
+.btn-ghost {
+  background: transparent; color: var(--text-light);
+  border: 1px solid var(--border); padding: 8px 16px;
+  border-radius: 6px; font-size: 13px; cursor: pointer; font-family: inherit;
+}
+.btn-ghost:hover { background: var(--light); }
+
+/* ── STEP 1 UPLOAD ── */
+.upload-zone {
+  border: 2px dashed var(--yellow); border-radius: 16px;
+  padding: 56px 40px; cursor: pointer; transition: all .2s;
+  background: white; margin-bottom: 24px; text-align: center;
+}
+.upload-zone:hover, .upload-zone.drag-over { background: var(--yellow-light); border-color: var(--dark-blue); }
+.upload-icon { font-size: 44px; margin-bottom: 12px; }
+.upload-title { font-size: 18px; font-weight: 700; color: var(--dark-blue); margin-bottom: 8px; }
+.upload-subtitle { color: var(--text-light); font-size: 14px; }
+.upload-preview {
+  margin-top: 14px; display: none; align-items: center;
+  justify-content: center; gap: 8px; font-size: 14px;
+  color: var(--dark-blue); font-weight: 600;
+}
+
+/* ── LANG BAR ── */
+.lang-bar {
+  background: white; border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 16px;
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 16px; flex-wrap: wrap;
+}
+.lang-bar-label { font-size: 13px; color: var(--text-light); white-space: nowrap; }
+.lang-btn {
+  padding: 7px 15px; border-radius: 20px;
+  border: 2px solid var(--border); background: white;
+  color: var(--text); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all .15s; font-family: inherit;
+}
+.lang-btn:hover { border-color: var(--yellow); }
+.lang-btn.active { background: var(--dark-blue); border-color: var(--dark-blue); color: white; }
+
+/* ── EDIT SECTION CARD ── */
+.section-card {
+  background: white; border-radius: var(--radius);
+  border: 1px solid var(--border); margin-bottom: 16px; overflow: hidden;
+}
+.section-header {
+  padding: 12px 16px; background: var(--dark-blue);
+  color: white; display: flex; align-items: center; gap: 10px;
+}
+.section-header h3 { font-size: 14px; font-weight: 700; }
+.week-badge {
+  background: var(--yellow); color: var(--dark-blue);
+  font-size: 11px; font-weight: 800; padding: 3px 10px;
+  border-radius: 20px; white-space: nowrap;
+}
+
+/* ── EDIT TABLE ── */
+.edit-table { width: 100%; border-collapse: collapse; }
+.edit-table th {
+  background: #f0f3f8; padding: 9px 12px;
+  text-align: left; font-size: 11px; color: var(--text-light);
+  font-weight: 700; border-bottom: 1px solid var(--border);
+  text-transform: uppercase; letter-spacing: .5px;
+}
+.edit-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.edit-table tr:last-child td { border-bottom: none; }
+
+.info-meta .date-str { font-weight: 700; color: var(--dark-blue); font-size: 14px; }
+.info-meta .day-str { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+.info-meta .time-str { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+
+.field-pair { display: flex; flex-direction: column; gap: 4px; }
+.field-pair textarea {
+  width: 100%; border: 1px solid var(--border); border-radius: 6px;
+  padding: 7px 9px; font-size: 12px; line-height: 1.55;
+  resize: vertical; min-height: 56px; font-family: inherit;
+  color: var(--text); transition: border-color .2s;
+}
+.field-pair textarea:focus { outline: none; border-color: var(--yellow); }
+.field-pair .tr-area {
+  color: var(--mid-blue); background: #f8f9fc;
+  border-color: #dde3ec;
+}
+.field-pair .tr-area:focus { border-color: var(--mid-blue); background: white; }
+.field-pair .tr-area.refreshing { opacity: .45; }
+
+.lang-tag {
+  display: inline-block; font-size: 10px; font-weight: 700;
+  padding: 1px 7px; border-radius: 4px; margin-bottom: 3px;
+}
+.tag-zh { background: #e2e8f4; color: var(--dark-blue); }
+.tag-id { background: #c62828; color: white; }
+.tag-tl { background: #1565c0; color: white; }
+.tag-vi { background: #2e7d32; color: white; }
+.tag-th { background: #6a1b9a; color: white; }
+
+.refresh-status { min-height: 20px; margin-top: 4px; }
+.refresh-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; padding: 2px 8px; border-radius: 12px;
+  font-weight: 600;
+}
+.badge-pending { background: var(--yellow-light); border: 1px solid var(--yellow); color: #8a6200; }
+.badge-done { background: var(--green-light); border: 1px solid #81c784; color: #2e7d32; }
+
+/* ── STEP 3 OUTPUT ── */
+.output-toolbar {
+  background: white; border-radius: var(--radius);
+  border: 1px solid var(--border); padding: 12px 16px;
+  margin-bottom: 16px; display: flex;
+  align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 10px;
+}
+.week-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.week-tab {
+  padding: 7px 14px; border-radius: 6px;
+  border: 2px solid var(--border); background: white;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  color: var(--text-light); line-height: 1.3; font-family: inherit;
+  text-align: center;
+}
+.week-tab.active { background: var(--dark-blue); border-color: var(--dark-blue); color: white; }
+.week-tab .week-range { font-size: 10px; font-weight: 400; display: block; opacity: .7; }
+
+.layout-toggle { display: flex; border: 2px solid var(--border); border-radius: 7px; overflow: hidden; }
+.layout-btn {
+  padding: 7px 14px; background: white; border: none;
+  font-size: 12px; cursor: pointer; color: var(--text-light);
+  font-weight: 600; font-family: inherit;
+}
+.layout-btn.active { background: var(--dark-blue); color: white; }
+
+.cards-wrap { display: flex; flex-direction: column; gap: 12px; }
+.cards-wrap.landscape {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 12px;
+}
+
+/* ── COURSE CARD ── */
+.course-card {
+  background: white; border-radius: 12px; overflow: hidden;
+  border: 1px solid var(--border); box-shadow: 0 1px 5px rgba(0,0,0,.05);
+}
+.card-head {
+  background: var(--dark-blue); color: white;
+  padding: 12px 16px; display: flex;
+  justify-content: space-between; align-items: center;
+}
+.card-date-block .card-date { font-size: 15px; font-weight: 700; }
+.card-date-block .card-day { font-size: 12px; opacity: .75; margin-top: 2px; }
+.card-time-pill {
+  font-size: 12px; background: rgba(255,255,255,.15);
+  padding: 4px 12px; border-radius: 14px; white-space: nowrap;
+}
+.card-name-block { padding: 14px 16px 2px; }
+.card-name-zh { font-size: 16px; font-weight: 700; color: var(--dark-blue); }
+.card-name-tr { font-size: 13px; color: var(--mid-blue); margin-top: 3px; }
+
+.card-body { padding: 10px 16px 16px; }
+.card-section { margin-top: 10px; }
+.section-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 700; padding: 3px 10px;
+  border-radius: 10px; margin-bottom: 7px;
+}
+.pill-desc { background: var(--yellow-light); color: #7a4f00; }
+.pill-prep { background: var(--green-light); color: #1b5e20; }
+.card-text-zh { font-size: 13px; color: var(--text); line-height: 1.6; }
+.card-text-tr { font-size: 13px; color: var(--mid-blue); line-height: 1.6; margin-top: 3px; }
+.card-divider { height: 1px; background: var(--border); margin: 8px 0 0; }
+
+.card-foot {
+  border-top: 1px solid var(--border); padding: 8px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: #fafbfc;
+}
+.brand-line { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-light); }
+.brand-dot { width: 14px; height: 14px; background: var(--yellow); border-radius: 50%; display: inline-block; flex-shrink: 0; }
+
+/* ── ACTION BAR ── */
+.action-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border);
+}
+
+/* ── LOADING ── */
+.loading-overlay {
+  position: fixed; inset: 0;
+  background: rgba(26,46,74,.88);
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 1000; color: white;
+}
+.spinner {
+  width: 46px; height: 46px;
+  border: 4px solid rgba(255,255,255,.2);
+  border-top-color: var(--yellow);
+  border-radius: 50%; animation: spin .75s linear infinite;
+  margin-bottom: 18px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+.loading-sub { font-size: 13px; opacity: .65; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: var(--dark-blue); color: white; padding: 11px 22px;
+  border-radius: 8px; font-size: 14px; z-index: 999;
+  opacity: 0; pointer-events: none; transition: opacity .3s; white-space: nowrap;
+}
+.toast.show { opacity: 1; }
+
+/* ── PRINT ── */
+@media print {
+  .header, .step-bar, .output-toolbar, .action-bar { display: none !important; }
+  .course-card { break-inside: avoid; box-shadow: none; }
+  body { background: white; }
+}
+
+@media (max-width: 600px) {
+  .header-title { font-size: 14px; }
+  .cards-wrap.landscape { grid-template-columns: 1fr; }
+  .edit-table th, .edit-table td { padding: 8px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="header">
+  <div class="logo-badge">One-Forty</div>
+  <div>
+    <div class="header-title">據點友善多語課表翻譯工具</div>
+    <div class="header-subtitle">協助移工了解長輩課程，提前做好準備</div>
+  </div>
+</header>
+
+<!-- ── STEP BAR ── -->
+<div class="step-bar">
+  <div class="step-item" id="si-1"><span class="step-num">1</span>上傳課表</div>
+  <div class="step-item" id="si-2"><span class="step-num">2</span>確認與編輯</div>
+  <div class="step-item" id="si-3"><span class="step-num">3</span>輸出課表</div>
+</div>
+
+<div class="container">
+
+<!-- ══ STEP 1 ══ -->
+<section id="step-1" style="display:none">
+  <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+    <div class="upload-icon">📋</div>
+    <div class="upload-title" id="upload-title">點擊或拖曳上傳月課表</div>
+    <div class="upload-subtitle">支援 JPG、PNG、PDF 格式</div>
+    <div class="upload-preview" id="upload-preview">
+      <span>✅</span><span id="upload-filename"></span>
+    </div>
+  </div>
+  <input type="file" id="file-input" accept="image/*,.pdf" style="display:none" onchange="handleFileSelect(this)">
+  <div style="text-align:center">
+    <button class="btn-primary" onclick="startProcessing()">🔍 開始解讀課表</button>
+  </div>
+</section>
+
+<!-- ══ STEP 2 ══ -->
+<section id="step-2" style="display:none">
+  <!-- Language switcher — always visible in edit mode -->
+  <div class="lang-bar">
+    <span class="lang-bar-label">翻譯語言：</span>
+    <button class="lang-btn" id="lb-id" onclick="switchLang('id')">🇮🇩 印尼文</button>
+    <button class="lang-btn" id="lb-tl" onclick="switchLang('tl')">🇵🇭 菲律賓文</button>
+    <button class="lang-btn" id="lb-vi" onclick="switchLang('vi')">🇻🇳 越南文</button>
+    <button class="lang-btn" id="lb-th" onclick="switchLang('th')">🇹🇭 泰文</button>
+  </div>
+
+  <div id="edit-content"></div>
+
+  <div class="action-bar">
+    <button class="btn-ghost" onclick="goToStep(1)">← 重新上傳</button>
+    <button class="btn-primary" onclick="goToStep(3)">確認，產出課表 →</button>
+  </div>
+</section>
+
+<!-- ══ STEP 3 ══ -->
+<section id="step-3" style="display:none">
+  <div class="output-toolbar">
+    <div class="week-tabs" id="week-tabs"></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div class="layout-toggle">
+        <button class="layout-btn active" id="lbtn-portrait" onclick="setLayout('portrait')">📱 直式</button>
+        <button class="layout-btn" id="lbtn-landscape" onclick="setLayout('landscape')">🖨️ 橫式</button>
+      </div>
+      <button class="btn-secondary" onclick="window.print()">列印</button>
+    </div>
+  </div>
+
+  <div class="cards-wrap" id="output-cards"></div>
+
+  <div class="action-bar">
+    <button class="btn-ghost" onclick="goToStep(2)">← 返回編輯</button>
+    <button class="btn-primary" onclick="showToast('✅ 課表連結已複製！（Demo）')">分享課表</button>
+  </div>
+</section>
+
+</div><!-- /container -->
+
+<!-- ── LOADING ── -->
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-title" id="loading-title">AI 正在解讀課表中...</div>
+  <div class="loading-sub" id="loading-sub">辨識課程項目、時間、地點</div>
+</div>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════
+   STATE
+══════════════════════════════════════════ */
+const S = {
+  lang: 'id',
+  week: 0,
+  layout: 'portrait',
+  edits: {},          // [courseId][field_lang] = value | null(=use mock)
+  timers: {}
+};
+
+/* ══════════════════════════════════════════
+   LANG CONFIG
+══════════════════════════════════════════ */
+const LANGS = {
+  id: { label: '印尼文',   flag: '🇮🇩', tagClass: 'tag-id' },
+  tl: { label: '菲律賓文', flag: '🇵🇭', tagClass: 'tag-tl' },
+  vi: { label: '越南文',   flag: '🇻🇳', tagClass: 'tag-vi' },
+  th: { label: '泰文',     flag: '🇹🇭', tagClass: 'tag-th' }
+};
+
+/* ══════════════════════════════════════════
+   MOCK SCHEDULE DATA
+══════════════════════════════════════════ */
+const SCHEDULE = {
+  title: '真福共好基地 115年3月課表',
+  weeks: [
+    {
+      id: 0, label: '第1週', range: '3/3 – 3/7',
+      courses: [
+        {
+          id:'c1', date:'3/3', time:'09:00–11:00',
+          day:{ zh:'週一', id:'Senin', tl:'Lunes', vi:'Thứ Hai', th:'วันจันทร์' },
+          name:{
+            zh:'樂齡動健康',
+            id:'Olahraga Lansia Sehat',
+            tl:'Ehersisyo para sa Matatanda',
+            vi:'Tập Thể Dục Cho Người Cao Tuổi',
+            th:'ออกกำลังกายผู้สูงอายุ'
+          },
+          desc:{
+            zh:'透過適合長輩的輕度有氧運動，增強體力、平衡感，並提升心情與社交連結',
+            id:'Melalui olahraga aerobik ringan yang cocok untuk lansia, meningkatkan stamina, keseimbangan, dan suasana hati',
+            tl:'Sa pamamagitan ng magaan na aerobics para sa matatanda, pinapalakas ang katawan, balanse, at nagpapabuti ng mood',
+            vi:'Thông qua các bài aerobic nhẹ nhàng phù hợp cho người cao tuổi, tăng cường sức lực, thăng bằng và tâm trạng',
+            th:'ผ่านการออกกำลังกายแอโรบิกเบาๆ สำหรับผู้สูงอายุ เสริมสร้างความแข็งแรง การทรงตัว และอารมณ์ดี'
+          },
+          prep:{
+            zh:'請穿著輕便舒適的衣物及平底運動鞋，無需費用',
+            id:'Kenakan pakaian ringan dan nyaman serta sepatu olahraga, tidak ada biaya',
+            tl:'Magsuot ng magaan at komportableng damit at flat shoes, walang bayad',
+            vi:'Mặc quần áo nhẹ thoải mái và giày đế bằng, miễn phí',
+            th:'สวมเสื้อผ้าเบาสบายและรองเท้าพื้นเรียบ ไม่มีค่าใช้จ่าย'
+          }
+        },
+        {
+          id:'c2', date:'3/4', time:'09:00–12:00',
+          day:{ zh:'週二', id:'Selasa', tl:'Martes', vi:'Thứ Ba', th:'วันอังคาร' },
+          name:{
+            zh:'文康休閒暨長照諮詢',
+            id:'Rekreasi Budaya & Konsultasi Perawatan',
+            tl:'Rekreasyon at Konsultasyon sa Pag-aalaga',
+            vi:'Giải Trí Văn Hóa & Tư Vấn Chăm Sóc',
+            th:'กิจกรรมนันทนาการและที่ปรึกษาการดูแล'
+          },
+          desc:{
+            zh:'提供長照相關諮詢服務，同時安排文化康樂活動，讓長輩放鬆身心',
+            id:'Memberikan konsultasi perawatan jangka panjang dan mengadakan kegiatan rekreasi budaya untuk relaksasi lansia',
+            tl:'Nagbibigay ng konsultasyon sa pag-aalaga at nag-oorganisa ng mga aktibidad pangkultura para sa relaksasyon ng matatanda',
+            vi:'Cung cấp tư vấn chăm sóc dài hạn và tổ chức hoạt động giải trí văn hóa để người cao tuổi thư giãn',
+            th:'ให้บริการให้คำปรึกษาด้านการดูแลระยะยาว และจัดกิจกรรมนันทนาการทางวัฒนธรรมเพื่อการผ่อนคลาย'
+          },
+          prep:{
+            zh:'無需準備，有長照問題歡迎帶相關資料詢問，無需費用',
+            id:'Tidak perlu persiapan khusus, silakan bawa dokumen jika ada pertanyaan, gratis',
+            tl:'Hindi kailangan ng paghahanda, maaaring magdala ng mga dokumento, walang bayad',
+            vi:'Không cần chuẩn bị, có thể mang tài liệu nếu có câu hỏi, miễn phí',
+            th:'ไม่ต้องเตรียมอะไร สามารถนำเอกสารมาหากมีคำถาม ไม่มีค่าใช้จ่าย'
+          }
+        },
+        {
+          id:'c3', date:'3/5', time:'10:00–12:00',
+          day:{ zh:'週三', id:'Rabu', tl:'Miyerkules', vi:'Thứ Tư', th:'วันพุธ' },
+          name:{
+            zh:'歡樂桌遊暨共餐',
+            id:'Permainan Meja Seru & Makan Bersama',
+            tl:'Masayang Board Game at Pagkain',
+            vi:'Trò Chơi Bàn Vui Nhộn & Ăn Chung',
+            th:'เกมกระดานสนุก & รับประทานอาหารร่วมกัน'
+          },
+          desc:{
+            zh:'透過輕鬆有趣的桌上遊戲，促進長輩腦力活化與人際互動，活動後一起共餐',
+            id:'Melalui permainan meja yang menyenangkan, merangsang aktivitas otak dan interaksi sosial lansia, diikuti makan bersama',
+            tl:'Sa pamamagitan ng masasayang board games, pinasisigla ang isipan at pakikipag-ugnayan, sinusundan ng pagkain',
+            vi:'Qua trò chơi bàn vui nhộn, kích thích não bộ và giao tiếp xã hội của người cao tuổi, sau đó ăn chung',
+            th:'ผ่านเกมกระดานที่สนุกสนาน กระตุ้นการทำงานของสมองและปฏิสัมพันธ์ทางสังคม ตามด้วยการรับประทานอาหารร่วมกัน'
+          },
+          prep:{
+            zh:'無需準備，共餐費用每位 50 元，請事先告知工作人員',
+            id:'Tidak perlu persiapan, biaya makan bersama NTD 50/orang, mohon beritahu staf',
+            tl:'Hindi na kailangang maghanda, bayad sa pagkain NTD 50/tao, pakiabisuhan ang staff',
+            vi:'Không cần chuẩn bị, phí ăn chung 50 NTD/người, vui lòng báo nhân viên',
+            th:'ไม่ต้องเตรียมอะไร ค่าอาหารร่วม 50 NTD/คน กรุณาแจ้งเจ้าหน้าที่'
+          }
+        },
+        {
+          id:'c4', date:'3/6', time:'14:00–16:00',
+          day:{ zh:'週四', id:'Kamis', tl:'Huwebes', vi:'Thứ Năm', th:'วันพฤหัสบดี' },
+          name:{
+            zh:'手沖咖啡風味訓練初階班',
+            id:'Kelas Dasar Kopi Pour-Over',
+            tl:'Pangunahing Klase ng Pour-Over Coffee',
+            vi:'Lớp Cơ Bản Pha Cà Phê Pour-Over',
+            th:'คลาสพื้นฐานกาแฟพอร์โอเวอร์'
+          },
+          desc:{
+            zh:'學習手沖咖啡的基本知識與技巧，探索各種咖啡風味，享受泡咖啡的樂趣',
+            id:'Belajar pengetahuan dasar dan teknik kopi pour-over, menjelajahi cita rasa kopi dan menikmati proses menyeduh',
+            tl:'Matuto ng pangunahing kaalaman at teknik ng pour-over coffee, tuklasin ang mga lasa ng kape',
+            vi:'Học kiến thức cơ bản và kỹ thuật pha cà phê pour-over, khám phá hương vị cà phê',
+            th:'เรียนรู้ความรู้พื้นฐานและเทคนิคการชงกาแฟพอร์โอเวอร์ สำรวจรสชาติกาแฟ'
+          },
+          prep:{
+            zh:'無需準備，材料費 100 元，請當天攜帶現金',
+            id:'Tidak perlu persiapan, biaya bahan NTD 100, harap bawa uang tunai pada hari itu',
+            tl:'Hindi na kailangang maghanda, bayad sa materyales NTD 100, magdala ng cash sa araw ng klase',
+            vi:'Không cần chuẩn bị, phí vật liệu 100 NTD, mang tiền mặt vào ngày học',
+            th:'ไม่ต้องเตรียมอะไร ค่าวัสดุ 100 NTD กรุณานำเงินสดมาในวันเรียน'
+          }
+        }
+      ]
+    },
+    {
+      id: 1, label: '第2週', range: '3/10 – 3/14',
+      courses: [
+        {
+          id:'c5', date:'3/10', time:'09:00–11:00',
+          day:{ zh:'週一', id:'Senin', tl:'Lunes', vi:'Thứ Hai', th:'วันจันทร์' },
+          name:{ zh:'樂齡動健康', id:'Olahraga Lansia Sehat', tl:'Ehersisyo para sa Matatanda', vi:'Tập Thể Dục Cho Người Cao Tuổi', th:'ออกกำลังกายผู้สูงอายุ' },
+          desc:{ zh:'透過適合長輩的輕度有氧運動，增強體力、平衡感，並提升心情與社交連結', id:'Melalui olahraga aerobik ringan yang cocok untuk lansia, meningkatkan stamina, keseimbangan, dan suasana hati', tl:'Sa pamamagitan ng magaan na aerobics para sa matatanda, pinapalakas ang katawan, balanse, at nagpapabuti ng mood', vi:'Thông qua các bài aerobic nhẹ nhàng phù hợp cho người cao tuổi, tăng cường sức lực, thăng bằng và tâm trạng', th:'ผ่านการออกกำลังกายแอโรบิกเบาๆ สำหรับผู้สูงอายุ เสริมสร้างความแข็งแรง การทรงตัว และอารมณ์ดี' },
+          prep:{ zh:'請穿著輕便舒適的衣物及平底運動鞋，無需費用', id:'Kenakan pakaian ringan dan nyaman serta sepatu olahraga, tidak ada biaya', tl:'Magsuot ng magaan at komportableng damit at flat shoes, walang bayad', vi:'Mặc quần áo nhẹ thoải mái và giày đế bằng, miễn phí', th:'สวมเสื้อผ้าเบาสบายและรองเท้าพื้นเรียบ ไม่มีค่าใช้จ่าย' }
+        },
+        {
+          id:'c6', date:'3/11', time:'09:00–11:00',
+          day:{ zh:'週二', id:'Selasa', tl:'Martes', vi:'Thứ Ba', th:'วันอังคาร' },
+          name:{ zh:'禪繞安心畫', id:'Melukis Pola Meditasi (Zentangle)', tl:'Zentangle Art para sa Kapayapaan', vi:'Vẽ Thiền Zentangle', th:'วาดภาพเซนแทงเกิลเพื่อความสงบ' },
+          desc:{ zh:'透過簡單重複的圖案繪製，達到放鬆心情、專注當下的冥想效果，適合各種程度', id:'Melalui gambar pola sederhana yang berulang, mencapai efek meditasi untuk relaksasi dan fokus, cocok untuk semua tingkat', tl:'Sa pamamagitan ng simple at paulit-ulit na pagguhit ng pattern, nakakamit ang epekto ng meditasyon, angkop para sa lahat', vi:'Qua việc vẽ các hoa văn đơn giản lặp đi lặp lại, đạt hiệu ứng thiền định để thư giãn, phù hợp mọi trình độ', th:'ผ่านการวาดลวดลายซ้ำๆ ง่ายๆ บรรลุผลการทำสมาธิเพื่อการผ่อนคลาย เหมาะสำหรับทุกระดับ' },
+          prep:{ zh:'無需任何繪畫基礎，材料費 80 元，請事先報名', id:'Tidak memerlukan keahlian menggambar, biaya bahan NTD 80, mohon daftar terlebih dahulu', tl:'Hindi kailangan ng kasanayan sa pagpipinta, bayad NTD 80, magregistro nang maaga', vi:'Không cần kỹ năng vẽ, phí vật liệu 80 NTD, vui lòng đăng ký trước', th:'ไม่ต้องมีทักษะการวาด ค่าวัสดุ 80 NTD กรุณาลงทะเบียนล่วงหน้า' }
+        },
+        {
+          id:'c7', date:'3/12', time:'10:00–12:00',
+          day:{ zh:'週三', id:'Rabu', tl:'Miyerkules', vi:'Thứ Tư', th:'วันพุธ' },
+          name:{ zh:'歡樂桌遊暨共餐', id:'Permainan Meja Seru & Makan Bersama', tl:'Masayang Board Game at Pagkain', vi:'Trò Chơi Bàn Vui Nhộn & Ăn Chung', th:'เกมกระดานสนุก & รับประทานอาหารร่วมกัน' },
+          desc:{ zh:'透過輕鬆有趣的桌上遊戲，促進長輩腦力活化與人際互動，活動後一起共餐', id:'Melalui permainan meja yang menyenangkan, merangsang aktivitas otak dan interaksi sosial lansia, diikuti makan bersama', tl:'Sa pamamagitan ng masasayang board games, pinasisigla ang isipan at pakikipag-ugnayan, sinusundan ng pagkain', vi:'Qua trò chơi bàn vui nhộn, kích thích não bộ và giao tiếp xã hội, sau đó ăn chung', th:'ผ่านเกมกระดานที่สนุกสนาน กระตุ้นการทำงานของสมองและปฏิสัมพันธ์ทางสังคม ตามด้วยการรับประทานอาหารร่วมกัน' },
+          prep:{ zh:'無需準備，共餐費用每位 50 元，請事先告知工作人員', id:'Tidak perlu persiapan, biaya makan bersama NTD 50/orang, mohon beritahu staf', tl:'Hindi na kailangang maghanda, bayad NTD 50/tao, pakiabisuhan ang staff', vi:'Không cần chuẩn bị, phí ăn chung 50 NTD/người, vui lòng báo nhân viên', th:'ไม่ต้องเตรียมอะไร ค่าอาหารร่วม 50 NTD/คน กรุณาแจ้งเจ้าหน้าที่' }
+        },
+        {
+          id:'c8', date:'3/13', time:'14:00–16:00',
+          day:{ zh:'週四', id:'Kamis', tl:'Huwebes', vi:'Thứ Năm', th:'วันพฤหัสบดี' },
+          name:{ zh:'手沖咖啡風味訓練初階班', id:'Kelas Dasar Kopi Pour-Over', tl:'Pangunahing Klase ng Pour-Over Coffee', vi:'Lớp Cơ Bản Pha Cà Phê Pour-Over', th:'คลาสพื้นฐานกาแฟพอร์โอเวอร์' },
+          desc:{ zh:'學習手沖咖啡的基本知識與技巧，探索各種咖啡風味，享受泡咖啡的樂趣', id:'Belajar pengetahuan dasar dan teknik kopi pour-over, menjelajahi cita rasa kopi', tl:'Matuto ng pangunahing kaalaman at teknik ng pour-over coffee, tuklasin ang mga lasa ng kape', vi:'Học kiến thức cơ bản và kỹ thuật pha cà phê pour-over, khám phá hương vị cà phê', th:'เรียนรู้ความรู้พื้นฐานและเทคนิคการชงกาแฟพอร์โอเวอร์ สำรวจรสชาติกาแฟ' },
+          prep:{ zh:'無需準備，材料費 100 元，請當天攜帶現金', id:'Tidak perlu persiapan, biaya bahan NTD 100, harap bawa uang tunai', tl:'Hindi na kailangang maghanda, bayad NTD 100, magdala ng cash', vi:'Không cần chuẩn bị, phí vật liệu 100 NTD, mang tiền mặt', th:'ไม่ต้องเตรียมอะไร ค่าวัสดุ 100 NTD กรุณานำเงินสดมา' }
+        }
+      ]
+    },
+    {
+      id: 2, label: '第3週', range: '3/17 – 3/21',
+      courses: [
+        {
+          id:'c9', date:'3/17', time:'09:00–12:00',
+          day:{ zh:'週一', id:'Senin', tl:'Lunes', vi:'Thứ Hai', th:'วันจันทร์' },
+          name:{ zh:'老當益壯抗衰跌暨共餐', id:'Latihan Anti-Jatuh & Makan Bersama', tl:'Pagsasanay Kontra-Pagbagsak at Pagkain', vi:'Tập Chống Ngã & Ăn Chung', th:'ฝึกป้องกันการหกล้ม & รับประทานอาหารร่วมกัน' },
+          desc:{ zh:'專為長輩設計的防跌倒訓練，透過平衡練習與肌力訓練，降低跌倒風險，活動後共餐', id:'Pelatihan pencegahan jatuh yang dirancang untuk lansia, melalui latihan keseimbangan dan kekuatan otot, diikuti makan bersama', tl:'Pagsasanay sa pag-iwas sa pagbagsak para sa matatanda, sa pamamagitan ng balanse at strength training, sinusundan ng pagkain', vi:'Chương trình tập phòng ngã cho người cao tuổi, qua bài tập thăng bằng và tăng cơ, sau đó ăn chung', th:'การฝึกป้องกันการหกล้มสำหรับผู้สูงอายุ ผ่านการฝึกทรงตัวและความแข็งแรง ตามด้วยการรับประทานอาหารร่วมกัน' },
+          prep:{ zh:'請穿著防滑鞋，共餐費用每位 50 元，請事先告知工作人員', id:'Kenakan sepatu anti-selip, biaya makan NTD 50/orang, beritahu staf', tl:'Magsuot ng non-slip shoes, bayad sa pagkain NTD 50/tao, abisuhan ang staff', vi:'Mang giày chống trơn, phí ăn chung 50 NTD/người, báo nhân viên trước', th:'สวมรองเท้ากันลื่น ค่าอาหารร่วม 50 NTD/คน กรุณาแจ้งเจ้าหน้าที่' }
+        },
+        {
+          id:'c10', date:'3/18', time:'09:00–11:00',
+          day:{ zh:'週二', id:'Selasa', tl:'Martes', vi:'Thứ Ba', th:'วันอังคาร' },
+          name:{ zh:'美樂蒂手作', id:'Kerajinan Tangan Melodi', tl:'Melody Handicraft', vi:'Thủ Công Giai Điệu', th:'งานฝีมือทำนองเพลง' },
+          desc:{ zh:'以音樂旋律為主題，帶領長輩進行手工藝創作，結合音樂欣賞與手作，豐富日常生活', id:'Bertema melodi musik, membimbing lansia dalam kerajinan tangan yang menggabungkan apresiasi musik dan kreativitas', tl:'Sa tema ng melodiya ng musika, ginagabayan ang matatanda sa paggawa ng handicraft at pag-appreciate ng musika', vi:'Chủ đề giai điệu âm nhạc, hướng dẫn người cao tuổi làm thủ công kết hợp thưởng thức âm nhạc', th:'ในธีมทำนองดนตรี นำผู้สูงอายุสร้างงานหัตถกรรมผสมผสานการฟังดนตรีและความคิดสร้างสรรค์' },
+          prep:{ zh:'無需準備，材料費 120 元，請事先報名並攜帶現金', id:'Tidak perlu persiapan, biaya bahan NTD 120, daftar dulu dan bawa uang tunai', tl:'Hindi na kailangang maghanda, bayad NTD 120, magregistro nang maaga at magdala ng cash', vi:'Không cần chuẩn bị, phí vật liệu 120 NTD, đăng ký trước và mang tiền mặt', th:'ไม่ต้องเตรียมอะไร ค่าวัสดุ 120 NTD กรุณาลงทะเบียนล่วงหน้าและนำเงินสด' }
+        },
+        {
+          id:'c11', date:'3/19', time:'10:00–12:00',
+          day:{ zh:'週三', id:'Rabu', tl:'Miyerkules', vi:'Thứ Tư', th:'วันพุธ' },
+          name:{ zh:'歡樂桌遊暨共餐', id:'Permainan Meja Seru & Makan Bersama', tl:'Masayang Board Game at Pagkain', vi:'Trò Chơi Bàn Vui Nhộn & Ăn Chung', th:'เกมกระดานสนุก & รับประทานอาหารร่วมกัน' },
+          desc:{ zh:'透過輕鬆有趣的桌上遊戲，促進長輩腦力活化與人際互動，活動後一起共餐', id:'Melalui permainan meja yang menyenangkan, merangsang aktivitas otak dan interaksi sosial, diikuti makan bersama', tl:'Sa pamamagitan ng masasayang board games, pinasisigla ang isipan at pakikipag-ugnayan, sinusundan ng pagkain', vi:'Qua trò chơi bàn vui nhộn, kích thích não bộ và giao tiếp xã hội, sau đó ăn chung', th:'ผ่านเกมกระดานที่สนุกสนาน กระตุ้นการทำงานของสมองและปฏิสัมพันธ์ทางสังคม ตามด้วยการรับประทานอาหารร่วมกัน' },
+          prep:{ zh:'無需準備，共餐費用每位 50 元，請事先告知工作人員', id:'Tidak perlu persiapan, biaya makan NTD 50/orang, beritahu staf', tl:'Hindi na kailangang maghanda, bayad NTD 50/tao, abisuhan ang staff', vi:'Không cần chuẩn bị, phí ăn chung 50 NTD/người, báo nhân viên', th:'ไม่ต้องเตรียมอะไร ค่าอาหารร่วม 50 NTD/คน แจ้งเจ้าหน้าที่' }
+        },
+        {
+          id:'c12', date:'3/20', time:'14:00–16:00',
+          day:{ zh:'週四', id:'Kamis', tl:'Huwebes', vi:'Thứ Năm', th:'วันพฤหัสบดี' },
+          name:{ zh:'認知桌遊-時光捕手', id:'Permainan Kognitif - Pemburu Waktu', tl:'Cognitive Board Game - Huhuli ng Oras', vi:'Trò Chơi Nhận Thức - Người Săn Thời Gian', th:'เกมพัฒนาความรู้ - นักล่าเวลา' },
+          desc:{ zh:'透過特別設計的認知訓練桌遊，刺激記憶力與注意力，達到延緩失智效果，輕鬆有趣', id:'Melalui permainan meja latihan kognitif yang dirancang khusus, merangsang ingatan dan perhatian untuk penundaan demensia', tl:'Sa pamamagitan ng espesyal na board game para sa cognitive training, pinasisigla ang memorya at atensyon', vi:'Qua trò chơi bàn huấn luyện nhận thức đặc biệt, kích thích trí nhớ và sự chú ý để trì hoãn mất trí nhớ', th:'ผ่านเกมกระดานฝึกความรู้ความเข้าใจพิเศษ กระตุ้นความจำและสมาธิเพื่อชะลอภาวะสมองเสื่อม' },
+          prep:{ zh:'無需準備，無需費用，歡迎各年齡層長輩參加', id:'Tidak perlu persiapan, tidak ada biaya, semua lansia dipersilakan bergabung', tl:'Hindi na kailangang maghanda, walang bayad, lahat ng matatanda ay welcome', vi:'Không cần chuẩn bị, miễn phí, chào đón người cao tuổi ở mọi độ tuổi', th:'ไม่ต้องเตรียมอะไร ไม่มีค่าใช้จ่าย ยินดีต้อนรับผู้สูงอายุทุกวัย' }
+        }
+      ]
+    },
+    {
+      id: 3, label: '第4週', range: '3/24 – 3/28',
+      courses: [
+        {
+          id:'c13', date:'3/24', time:'09:00–12:00',
+          day:{ zh:'週一', id:'Senin', tl:'Lunes', vi:'Thứ Hai', th:'วันจันทร์' },
+          name:{ zh:'老當益壯抗衰跌暨共餐', id:'Latihan Anti-Jatuh & Makan Bersama', tl:'Pagsasanay Kontra-Pagbagsak at Pagkain', vi:'Tập Chống Ngã & Ăn Chung', th:'ฝึกป้องกันการหกล้ม & รับประทานอาหารร่วมกัน' },
+          desc:{ zh:'專為長輩設計的防跌倒訓練，透過平衡練習與肌力訓練，降低跌倒風險，活動後共餐', id:'Pelatihan pencegahan jatuh yang dirancang untuk lansia, melalui latihan keseimbangan dan kekuatan otot, diikuti makan bersama', tl:'Pagsasanay sa pag-iwas sa pagbagsak para sa matatanda, sa pamamagitan ng balanse at strength training, sinusundan ng pagkain', vi:'Chương trình tập phòng ngã cho người cao tuổi, qua bài tập thăng bằng và tăng cơ, sau đó ăn chung', th:'การฝึกป้องกันการหกล้มสำหรับผู้สูงอายุ ผ่านการฝึกทรงตัวและความแข็งแรง ตามด้วยการรับประทานอาหารร่วมกัน' },
+          prep:{ zh:'請穿著防滑鞋，共餐費用每位 50 元，請事先告知工作人員', id:'Kenakan sepatu anti-selip, biaya makan NTD 50/orang, beritahu staf', tl:'Magsuot ng non-slip shoes, bayad NTD 50/tao, abisuhan ang staff', vi:'Mang giày chống trơn, phí ăn chung 50 NTD/người, báo nhân viên', th:'สวมรองเท้ากันลื่น ค่าอาหารร่วม 50 NTD/คน กรุณาแจ้งเจ้าหน้าที่' }
+        },
+        {
+          id:'c14', date:'3/25', time:'09:00–11:00',
+          day:{ zh:'週二', id:'Selasa', tl:'Martes', vi:'Thứ Ba', th:'วันอังคาร' },
+          name:{ zh:'藝術治療', id:'Terapi Seni', tl:'Art Therapy', vi:'Liệu Pháp Nghệ Thuật', th:'ศิลปบำบัด' },
+          desc:{ zh:'透過繪畫、拼貼等藝術媒介，引導長輩表達內心感受、舒緩情緒，增進身心健康', id:'Melalui media seni seperti melukis dan kolase, memandu lansia mengekspresikan perasaan dan meredakan emosi', tl:'Sa pamamagitan ng sining tulad ng pagpipinta at collage, ginagabayan ang matatanda na ipahayag ang kanilang nararamdaman', vi:'Qua nghệ thuật như vẽ tranh và cắt dán, hướng dẫn người cao tuổi bày tỏ cảm xúc nội tâm, giải tỏa cảm xúc', th:'ผ่านศิลปะเช่นการวาดภาพและการตัดปะ นำผู้สูงอายุแสดงออกถึงความรู้สึกและคลายอารมณ์' },
+          prep:{ zh:'無需藝術背景，材料費 80 元，請事先報名', id:'Tidak memerlukan latar belakang seni, biaya bahan NTD 80, mohon daftar dulu', tl:'Hindi kailangan ng background sa sining, bayad NTD 80, magregistro nang maaga', vi:'Không cần nền tảng nghệ thuật, phí vật liệu 80 NTD, đăng ký trước', th:'ไม่ต้องมีพื้นฐานด้านศิลปะ ค่าวัสดุ 80 NTD กรุณาลงทะเบียนล่วงหน้า' }
+        },
+        {
+          id:'c15', date:'3/26', time:'10:00–12:00',
+          day:{ zh:'週三', id:'Rabu', tl:'Miyerkules', vi:'Thứ Tư', th:'วันพุธ' },
+          name:{ zh:'歡樂桌遊暨共餐', id:'Permainan Meja Seru & Makan Bersama', tl:'Masayang Board Game at Pagkain', vi:'Trò Chơi Bàn Vui Nhộn & Ăn Chung', th:'เกมกระดานสนุก & รับประทานอาหารร่วมกัน' },
+          desc:{ zh:'透過輕鬆有趣的桌上遊戲，促進長輩腦力活化與人際互動，活動後一起共餐', id:'Melalui permainan meja yang menyenangkan, merangsang aktivitas otak dan interaksi sosial, diikuti makan bersama', tl:'Sa pamamagitan ng masasayang board games, pinasisigla ang isipan at pakikipag-ugnayan, sinusundan ng pagkain', vi:'Qua trò chơi bàn vui nhộn, kích thích não bộ và giao tiếp xã hội, sau đó ăn chung', th:'ผ่านเกมกระดานที่สนุกสนาน กระตุ้นการทำงานของสมองและปฏิสัมพันธ์ทางสังคม ตามด้วยการรับประทานอาหารร่วมกัน' },
+          prep:{ zh:'無需準備，共餐費用每位 50 元，請事先告知工作人員', id:'Tidak perlu persiapan, biaya makan NTD 50/orang, beritahu staf', tl:'Hindi na kailangang maghanda, bayad NTD 50/tao, abisuhan ang staff', vi:'Không cần chuẩn bị, phí ăn chung 50 NTD/người, báo nhân viên', th:'ไม่ต้องเตรียมอะไร ค่าอาหารร่วม 50 NTD/คน แจ้งเจ้าหน้าที่' }
+        },
+        {
+          id:'c16', date:'3/27', time:'14:00–16:00',
+          day:{ zh:'週四', id:'Kamis', tl:'Huwebes', vi:'Thứ Năm', th:'วันพฤหัสบดี' },
+          name:{ zh:'預防延緩-菲躍樂齡', id:'Pencegahan Penuaan - Gerak Filipino', tl:'Pag-iwas sa Pagtanda - Filipino Movement', vi:'Phòng Ngừa Lão Hóa - Vũ Điệu Philippines', th:'ป้องกันการชราภาพ - การเคลื่อนไหวฟิลิปปินส์' },
+          desc:{ zh:'結合菲律賓傳統舞步與體適能運動，充滿活力，專為樂齡族群設計，預防延緩老化', id:'Menggabungkan gerakan tari tradisional Filipina dan olahraga kebugaran, penuh semangat, dirancang untuk lansia aktif', tl:'Pinagsama ang tradisyonal na sayaw ng Pilipino at fitness, puno ng enerhiya, para sa aktibong matatanda', vi:'Kết hợp vũ điệu Philippines và thể dục, đầy năng lượng, thiết kế riêng cho người cao tuổi năng động', th:'ผสมผสานการเต้นรำฟิลิปปินส์และการออกกำลังกาย เต็มพลัง สำหรับผู้สูงอายุที่กระตือรือร้น' },
+          prep:{ zh:'請穿著舒適運動服及運動鞋，無需費用', id:'Kenakan pakaian olahraga nyaman dan sepatu, tidak ada biaya', tl:'Magsuot ng komportableng sportswear at sapatos, walang bayad', vi:'Mặc đồ thể thao thoải mái và giày thể thao, miễn phí', th:'สวมชุดออกกำลังกายสบายและรองเท้ากีฬา ไม่มีค่าใช้จ่าย' }
+        }
+      ]
+    }
+  ]
+};
+
+/* ── Init edits ── */
+SCHEDULE.weeks.forEach(w => w.courses.forEach(c => {
+  S.edits[c.id] = { zh_name:null, zh_desc:null, zh_prep:null };
+  ['id','tl','vi','th'].forEach(l => {
+    S.edits[c.id][`tr_name_${l}`] = null;
+    S.edits[c.id][`tr_desc_${l}`] = null;
+    S.edits[c.id][`tr_prep_${l}`] = null;
+  });
+}));
+
+/* ══════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════ */
+function getVal(course, field, lang) {
+  if (lang === 'zh') {
+    return S.edits[course.id][`zh_${field}`] ?? course[field].zh;
+  }
+  return S.edits[course.id][`tr_${field}_${lang}`] ?? course[field][lang];
+}
+
+function findCourse(id) {
+  for (const w of SCHEDULE.weeks) for (const c of w.courses) if (c.id === id) return c;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function esc(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ══════════════════════════════════════════
+   STEP NAVIGATION
+══════════════════════════════════════════ */
+function goToStep(n) {
+  ['step-1','step-2','step-3'].forEach((id,i) => {
+    document.getElementById(id).style.display = (i+1===n) ? 'block' : 'none';
+  });
+  [1,2,3].forEach(i => {
+    const el = document.getElementById(`si-${i}`);
+    el.className = 'step-item' + (i===n ? ' active' : i<n ? ' done' : '');
+    el.querySelector('.step-num').textContent = i < n ? '✓' : i;
+  });
+  S.currentStep = n;
+  if (n === 2) { renderStep2(); }
+  if (n === 3) { renderStep3(); }
+  window.scrollTo(0, 0);
+}
+
+/* ══════════════════════════════════════════
+   UPLOAD
+══════════════════════════════════════════ */
+function handleFileSelect(input) {
+  if (!input.files[0]) return;
+  const preview = document.getElementById('upload-preview');
+  document.getElementById('upload-filename').textContent = input.files[0].name;
+  document.getElementById('upload-title').textContent = '課表已選取 ✅';
+  preview.style.display = 'flex';
+}
+
+const uz = document.getElementById('upload-zone');
+uz.addEventListener('dragover', e => { e.preventDefault(); uz.classList.add('drag-over'); });
+uz.addEventListener('dragleave', () => uz.classList.remove('drag-over'));
+uz.addEventListener('drop', e => {
+  e.preventDefault(); uz.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) {
+    document.getElementById('file-input').files = e.dataTransfer.files;
+    handleFileSelect(document.getElementById('file-input'));
+  }
+});
+
+function startProcessing() {
+  const ol = document.getElementById('loading');
+  ol.style.display = 'flex';
+  const msgs = [
+    ['AI 正在解讀課表中...','辨識課程項目、時間、地點'],
+    ['正在解析課程內容...','萃取課程說明與準備事項'],
+    ['整理雙語對照資料...','套入移工友善版型']
+  ];
+  let i = 0;
+  const t = setInterval(() => {
+    i = (i+1) % msgs.length;
+    document.getElementById('loading-title').textContent = msgs[i][0];
+    document.getElementById('loading-sub').textContent = msgs[i][1];
+  }, 800);
+  setTimeout(() => { clearInterval(t); ol.style.display = 'none'; goToStep(2); }, 2500);
+}
+
+/* ══════════════════════════════════════════
+   LANG SWITCH
+══════════════════════════════════════════ */
+function switchLang(lang) {
+  S.lang = lang;
+  ['id','tl','vi','th'].forEach(l =>
+    document.getElementById(`lb-${l}`).classList.toggle('active', l === lang)
+  );
+  renderStep2();
+  // If already on step 3, re-render output too
+  if (document.getElementById('step-3').style.display !== 'none') renderWeekCards();
+}
+
+/* ══════════════════════════════════════════
+   STEP 2 RENDER
+══════════════════════════════════════════ */
+function renderStep2() {
+  const lang = S.lang;
+  const li = LANGS[lang];
+  let html = '';
+
+  SCHEDULE.weeks.forEach(week => {
+    html += `<div class="section-card">
+      <div class="section-header">
+        <span class="week-badge">${week.label}</span>
+        <h3>${week.range}　${SCHEDULE.title}</h3>
+      </div>
+      <div style="overflow-x:auto">
+      <table class="edit-table">
+        <thead><tr>
+          <th style="width:72px">日期</th>
+          <th style="width:64px">時間</th>
+          <th style="min-width:140px">課程名稱</th>
+          <th style="min-width:180px">課程說明</th>
+          <th style="min-width:160px">準備事項</th>
+        </tr></thead>
+        <tbody>`;
+
+    week.courses.forEach(c => {
+      const nameZh = esc(getVal(c,'name','zh'));
+      const descZh = esc(getVal(c,'desc','zh'));
+      const prepZh = esc(getVal(c,'prep','zh'));
+      const nameTr = esc(getVal(c,'name',lang));
+      const descTr = esc(getVal(c,'desc',lang));
+      const prepTr = esc(getVal(c,'prep',lang));
+
+      html += `<tr>
+        <td class="info-meta">
+          <div class="date-str">${c.date}</div>
+          <div class="day-str">${c.day.zh}</div>
+        </td>
+        <td class="info-meta">
+          <div class="time-str">${c.time}</div>
+        </td>
+        ${editCell(c.id,'name','課程名稱',nameZh,nameTr,li)}
+        ${editCell(c.id,'desc','課程說明',descZh,descTr,li)}
+        ${editCell(c.id,'prep','準備事項',prepZh,prepTr,li)}
+      </tr>`;
+    });
+
+    html += `</tbody></table></div></div>`;
+  });
+
+  document.getElementById('edit-content').innerHTML = html;
+}
+
+function editCell(id, field, label, zhVal, trVal, li) {
+  return `<td>
+    <div class="field-pair">
+      <span class="lang-tag tag-zh">中</span>
+      <textarea rows="3"
+        oninput="onZhEdit('${id}','${field}',this.value)">${zhVal}</textarea>
+      <span class="lang-tag ${li.tagClass}">${li.flag} ${li.label}</span>
+      <textarea rows="3" class="tr-area" id="tr_${field}_${id}"
+        oninput="S.edits['${id}']['tr_${field}_${S.lang}']=this.value">${trVal}</textarea>
+      <div class="refresh-status" id="rs_${field}_${id}"></div>
+    </div>
+  </td>`;
+}
+
+/* ══════════════════════════════════════════
+   EDIT HANDLERS — 2-second auto-refresh
+══════════════════════════════════════════ */
+function onZhEdit(id, field, value) {
+  S.edits[id][`zh_${field}`] = value;
+
+  const key = `${id}_${field}`;
+  clearTimeout(S.timers[key]);
+
+  const rsEl = document.getElementById(`rs_${field}_${id}`);
+  const trEl = document.getElementById(`tr_${field}_${id}`);
+  if (rsEl) rsEl.innerHTML = '<span class="refresh-badge badge-pending">⏳ 翻譯更新中...</span>';
+  if (trEl) trEl.classList.add('refreshing');
+
+  S.timers[key] = setTimeout(() => {
+    const course = findCourse(id);
+    if (course && trEl) {
+      // Demo: restore mock translation for current language
+      const fresh = course[field][S.lang];
+      trEl.value = fresh;
+      S.edits[id][`tr_${field}_${S.lang}`] = null;
+      trEl.classList.remove('refreshing');
+    }
+    if (rsEl) {
+      rsEl.innerHTML = '<span class="refresh-badge badge-done">✓ 翻譯已更新</span>';
+      setTimeout(() => { if (rsEl) rsEl.innerHTML = ''; }, 2200);
+    }
+  }, 2000);
+}
+
+/* ══════════════════════════════════════════
+   STEP 3 RENDER
+══════════════════════════════════════════ */
+function renderStep3() {
+  const tabs = SCHEDULE.weeks.map(w =>
+    `<button class="week-tab ${w.id===S.week?'active':''}" onclick="selectWeek(${w.id})">
+      ${w.label}<span class="week-range">${w.range}</span>
+    </button>`
+  ).join('');
+  document.getElementById('week-tabs').innerHTML = tabs;
+  renderWeekCards();
+}
+
+function selectWeek(id) {
+  S.week = id;
+  document.querySelectorAll('.week-tab').forEach((t,i) => t.classList.toggle('active', i===id));
+  renderWeekCards();
+}
+
+function setLayout(l) {
+  S.layout = l;
+  document.getElementById('lbtn-portrait').classList.toggle('active', l==='portrait');
+  document.getElementById('lbtn-landscape').classList.toggle('active', l==='landscape');
+  document.getElementById('output-cards').classList.toggle('landscape', l==='landscape');
+}
+
+function renderWeekCards() {
+  const lang = S.lang;
+  const li = LANGS[lang];
+  const week = SCHEDULE.weeks[S.week];
+
+  const html = week.courses.map(c => {
+    const nameZh = getVal(c,'name','zh');
+    const descZh = getVal(c,'desc','zh');
+    const prepZh = getVal(c,'prep','zh');
+    const nameTr = getVal(c,'name',lang);
+    const descTr = getVal(c,'desc',lang);
+    const prepTr = getVal(c,'prep',lang);
+
+    return `<div class="course-card">
+      <div class="card-head">
+        <div class="card-date-block">
+          <div class="card-date">${c.date}　${c.day.zh}</div>
+          <div class="card-day">${c.day[lang]}</div>
+        </div>
+        <div class="card-time-pill">🕐 ${c.time}</div>
+      </div>
+      <div class="card-name-block">
+        <div class="card-name-zh">${nameZh}</div>
+        <div class="card-name-tr">${li.flag} ${nameTr}</div>
+      </div>
+      <div class="card-body">
+        <div class="card-section">
+          <div class="section-pill pill-desc">📚 課程說明</div>
+          <div class="card-text-zh">${descZh}</div>
+          <div class="card-text-tr">${descTr}</div>
+        </div>
+        <div class="card-divider"></div>
+        <div class="card-section">
+          <div class="section-pill pill-prep">✅ 準備事項</div>
+          <div class="card-text-zh">${prepZh}</div>
+          <div class="card-text-tr">${prepTr}</div>
+        </div>
+      </div>
+      <div class="card-foot">
+        <div class="brand-line"><span class="brand-dot"></span>One-Forty 為您製作 ｜ ${SCHEDULE.title}</div>
+        <span style="font-size:11px;color:var(--text-light)">${week.label} ${week.range}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('output-cards').innerHTML = html;
+}
+
+/* ── Boot ── */
+goToStep(1);
+</script>
+</body>
+</html>
